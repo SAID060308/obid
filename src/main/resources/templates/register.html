@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Monitoring | Ro'yxatdan o'tish</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            animation: fadeUp 0.5s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient-1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+        }
+
+        .auth-logo .logo-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .auth-logo h4 {
+            font-weight: 700;
+            color: #1e1e2f;
+            margin-bottom: 0.3rem;
+        }
+
+        .auth-logo p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
+            background: white;
+        }
+
+        .form-control.is-invalid {
+            border-color: #f72585;
+            background: #fff0f7;
+        }
+
+        .form-control.is-valid {
+            border-color: #4cc9f0;
+            background: #f0fbff;
+        }
+
+        .input-group .form-control {
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .input-group .btn-outline-secondary {
+            border: 2px solid #e9ecef;
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+            background: #f8f9fa;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .btn-register {
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 12px;
+            padding: 13px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            width: 100%;
+            color: white;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+            color: white;
+        }
+
+        .divider {
+            text-align: center;
+            color: #adb5bd;
+            font-size: 0.85rem;
+            margin: 1.2rem 0;
+            position: relative;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 42%;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .login-link {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .login-link a {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-link a:hover { text-decoration: underline; }
+
+        .alert-error {
+            background: #fff0f3;
+            border: 1px solid #ffb3c1;
+            color: #c9184a;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .city-hint {
+            font-size: 0.8rem;
+            color: #adb5bd;
+            margin-top: 5px;
+        }
+
+        .password-match {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+        <div class="logo-icon">
+            <i class="bi bi-tree-fill"></i>
+        </div>
+        <h4>Eco Monitoring</h4>
+        <p>Yangi hisob yaratish</p>
+    </div>
+
+    <!-- Error -->
+    <div th:if="${error}" class="alert-error">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Form -->
+    <form th:action="@{/register}" method="post" th:object="${user}" id="registerForm">
+
+        <!-- Ism / Familiya -->
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <label class="form-label">
+                    <i class="bi bi-person me-1"></i>Ism
+                </label>
+                <input type="text" class="form-control"
+                       th:field="*{firstName}"
+                       placeholder="Ismingiz" required>
+            </div>
+            <div class="col-6">
+                <label class="form-label">
+                    <i class="bi bi-person me-1"></i>Familiya
+                </label>
+                <input type="text" class="form-control"
+                       th:field="*{lastName}"
+                       placeholder="Familiyangiz" required>
+            </div>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-3">
+            <label class="form-label">
+                <i class="bi bi-at me-1"></i>Username
+            </label>
+            <input type="text" class="form-control"
+                   th:field="*{username}"
+                   placeholder="username" required>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+            <label class="form-label">
+                <i class="bi bi-envelope me-1"></i>Email
+            </label>
+            <input type="email" class="form-control"
+                   th:field="*{email}"
+                   placeholder="email@example.com" required>
+        </div>
+
+        <!-- Shahar -->
+        <div class="mb-3">
+            <label class="form-label">
+                <i class="bi bi-geo-alt me-1"></i>Shahar
+            </label>
+            <input type="text" class="form-control"
+                   th:field="*{city}"
+                   placeholder="Tashkent, Samarkand..." required>
+            <p class="city-hint">
+                <i class="bi bi-info-circle me-1"></i>
+                Kiritgan shahringiz bo'yicha ob-havo avtomatik yuklanadi
+            </p>
+        </div>
+
+        <!-- Parol -->
+        <div class="mb-3">
+            <label class="form-label">
+                <i class="bi bi-lock me-1"></i>Parol
+            </label>
+            <div class="input-group">
+                <input type="password" class="form-control"
+                       th:field="*{password}"
+                       id="passwordInput"
+                       placeholder="parol kiriting"
+                       oninput="checkPasswords()" required>
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePassword('passwordInput', 'eyeIcon1')">
+                    <i class="bi bi-eye" id="eyeIcon1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Parolni tasdiqlash -->
+        <div class="mb-4">
+            <label class="form-label">
+                <i class="bi bi-lock-fill me-1"></i>Parolni tasdiqlang
+            </label>
+            <div class="input-group">
+                <input type="password" class="form-control"
+                       name="confirmPassword"
+                       id="confirmInput"
+                       placeholder="parolni qayta kiriting"
+                       oninput="checkPasswords()" required>
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePassword('confirmInput', 'eyeIcon2')">
+                    <i class="bi bi-eye" id="eyeIcon2"></i>
+                </button>
+            </div>
+            <!-- Match indicator -->
+            <p class="password-match text-danger" id="noMatch">
+                <i class="bi bi-x-circle me-1"></i>Parollar mos kelmadi!
+            </p>
+            <p class="password-match text-success" id="yesMatch">
+                <i class="bi bi-check-circle me-1"></i>Parollar mos keldi!
+            </p>
+        </div>
+
+        <button type="submit" class="btn-register" id="submitBtn">
+            <i class="bi bi-person-plus me-2"></i>Ro'yxatdan o'tish
+        </button>
+    </form>
+
+    <div class="divider">yoki</div>
+
+    <div class="login-link">
+        Hisobingiz bormi? <a href="/login">Kirish</a>
+    </div>
+</div>
+
+<script>
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+
+    function checkPasswords() {
+        const pass = document.getElementById('passwordInput').value;
+        const confirm = document.getElementById('confirmInput').value;
+        const noMatch = document.getElementById('noMatch');
+        const yesMatch = document.getElementById('yesMatch');
+        const submitBtn = document.getElementById('submitBtn');
+        const confirmInput = document.getElementById('confirmInput');
+
+        if (confirm.length === 0) {
+            noMatch.style.display = 'none';
+            yesMatch.style.display = 'none';
+            confirmInput.classList.remove('is-invalid', 'is-valid');
+            submitBtn.disabled = false;
+            return;
+        }
+
+        if (pass === confirm) {
+            noMatch.style.display = 'none';
+            yesMatch.style.display = 'block';
+            confirmInput.classList.remove('is-invalid');
+            confirmInput.classList.add('is-valid');
+            submitBtn.disabled = false;
+        } else {
+            yesMatch.style.display = 'none';
+            noMatch.style.display = 'block';
+            confirmInput.classList.remove('is-valid');
+            confirmInput.classList.add('is-invalid');
+            submitBtn.disabled = true;
+        }
+    }
+</script>
+</body>
+</html>

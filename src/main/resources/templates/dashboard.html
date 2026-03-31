@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Monitoring | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --dark: #1e1e2f;
+            --light: #f8f9fa;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 25px rgba(0,0,0,0.1);
+            --shadow-lg: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+
+        .dashboard-header {
+            background: var(--gradient-1);
+            color: white;
+            padding: 1.2rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .user-info:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+
+        /* ✅ Logout button */
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 20px;
+            transition: all 0.3s;
+            border: 1px solid rgba(0,0,0,0.05);
+            animation: slideLeft 0.5s ease;
+        }
+
+        @keyframes slideLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ✅ Sidebar li va a stillari */
+        .sidebar ul li {
+            padding: 0;
+            margin-bottom: 5px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .sidebar ul li a i {
+            font-size: 1.2rem;
+            width: 24px;
+        }
+
+        .sidebar ul li a:hover {
+            background: var(--gradient-1);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar ul li.active a {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-card, .table-card, .charts-container {
+            background: white;
+            border-radius: 20px;
+            padding: 1.8rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.3s;
+            animation: slideRight 0.5s ease;
+        }
+
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .search-card:hover, .table-card:hover, .charts-container:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+
+        .search-card form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-card .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .search-card .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67,97,238,0.15);
+            background: white;
+        }
+
+        .search-card .btn-primary {
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .search-card .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+        }
+
+        .table-card h4 {
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table { margin-bottom: 0; }
+
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 15px 12px;
+        }
+
+        .table tbody td {
+            padding: 15px 12px;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+
+        .table tbody tr { transition: all 0.3s; }
+
+        .table tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-temp {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-humidity {
+            background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-pressure {
+            background: linear-gradient(135deg, #f8961e 0%, #f3722c 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #f1f1f1;
+            transition: all 0.3s;
+        }
+
+        .chart-wrapper:hover { box-shadow: var(--shadow-md); }
+
+        .chart-wrapper h5 {
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        .empty-state h5 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header { flex-direction: column; text-align: center; gap: 15px; }
+            .search-card form { flex-direction: column; }
+            .sidebar { position: relative; top: 0; margin-bottom: 1.5rem; }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+
+</head>
+<body>
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-tree-fill me-2"></i>Eco Monitoring</h2>
+            <p class="mb-0 opacity-75 small">Havo sifati monitoring tizimi</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <div class="user-info">
+                <i class="bi bi-person-circle fs-5"></i>
+                <span class="fw-semibold" th:text="${username}">User</span>
+            </div>
+            <!-- ✅ Logout POST bilan -->
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Chiqish</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="sidebar">
+                <ul class="list-unstyled">
+                    <li class="active">
+                        <a href="/"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="/cities"><i class="bi bi-building"></i> Shaharlar</a>
+                    </li>
+                    <li>
+                        <a href="/history"><i class="bi bi-clock-history"></i> Tarix</a>
+                    </li>
+                    <li>
+                        <a href="/statistics"><i class="bi bi-graph-up"></i> Statistikalar</a>
+                    </li>
+                    <li>
+                        <a href="/settings"><i class="bi bi-gear"></i> Sozlamalar</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+
+            <!-- Eski search-card o'rniga -->
+            <div class="search-card d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1 fw-bold" style="color: #1e1e2f;">
+                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                        <span th:text="${currentCity}">Tashkent</span>
+                    </h5>
+                    <p class="mb-0 text-muted small">Joriy shahar ob-havosi</p>
+                </div>
+                <a href="/cities" class="btn btn-primary"
+                   style="background: var(--gradient-1); border: none;
+              border-radius: 50px; padding: 10px 20px; font-weight: 600;">
+                    <i class="bi bi-building me-2"></i>Shaharni o'zgartirish
+                </a>
+            </div>
+
+            <!-- Alerts Section -->
+            <div th:if="${alerts != null and !alerts.isEmpty()}" class="mb-4">
+                <div style="background: white; border-radius: 20px; padding: 1.8rem;
+                            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                            border-left: 5px solid #f8961e;">
+                    <h4 style="color: #1e1e2f; font-weight: 600; margin-bottom: 1.2rem;">
+                        <i class="bi bi-bell-fill text-warning me-2"></i>Ogohlantirishlar
+                    </h4>
+                    <div th:each="alert : ${alerts}"
+                         style="background: #fff8f0; border-radius: 12px; padding: 12px 16px;
+                                margin-bottom: 10px; border: 1px solid #fde8c8; font-weight: 500;">
+                        <span th:text="${alert}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Table -->
+            <div class="table-card">
+                <h4><i class="bi bi-cloud-sun text-primary"></i> Ob-havo ma'lumotlari</h4>
+
+                <div th:if="${weatherList == null or weatherList.isEmpty()}" class="empty-state">
+                    <i class="bi bi-cloud-slash d-block"></i>
+                    <h5>Ma'lumot mavjud emas</h5>
+                    <p class="text-muted">Yuqoridagi forma orqali shahar kiriting</p>
+                </div>
+
+                <div th:if="${weatherList != null and !weatherList.isEmpty()}">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Vaqt</th>
+                                <th>Shahar</th>
+                                <th>Harorat</th>
+                                <th>Namlik</th>
+                                <th>Bosim</th>
+                                <th>Shamol</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="w : ${weatherList}">
+                                <td>
+                                    <i class="bi bi-clock me-1 text-primary"></i>
+                                    <span th:text="${#temporals.format(w.timestamp, 'dd.MM.yyyy HH:mm')}"></span>
+                                </td>
+                                <td>
+                                    <i class="bi bi-geo-alt-fill me-1 text-danger"></i>
+                                    <span class="fw-semibold" th:text="${w.city}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge-temp" th:text="${w.temperature + '°C'}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge-humidity" th:text="${w.humidity + '%'}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge-pressure" th:text="${w.pressure + ' hPa'}"></span>
+                                </td>
+                                <td>
+                                    <i class="bi bi-wind me-1 text-info"></i>
+                                    <span th:text="${w.windSpeed + ' m/s'}"></span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts section (oldin gi charts-container ni shu bilan almashtir) -->
+            <div class="charts-container" th:if="${weatherList != null and !weatherList.isEmpty()}">
+
+                <div class="chart-wrapper">
+                    <h5><i class="bi bi-thermometer-half" style="color: #f72585;"></i> Harorat grafigi</h5>
+                    <div style="position: relative; height: 380px;">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <h5>
+                        <i class="bi bi-droplet" style="color: #4cc9f0;"></i>
+                        <i class="bi bi-speedometer2" style="color: #f8961e;"></i>
+                        Namlik & Bosim grafigi
+                    </h5>
+                    <div style="position: relative; height: 380px;">
+                        <canvas id="humidityPressureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <i class="bi bi-c-circle me-1"></i>
+        2026 Eco Monitoring | Barcha huquqlar himoyalangan
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            var weatherData = [[${weatherList}]];
+            console.log("Weather Data:", weatherData);
+
+            if (weatherData && weatherData.length > 0) {
+                var labels = weatherData.map(w => {
+                    try {
+                        if (w.timestamp) {
+                            var date = new Date(w.timestamp);
+                            return date.toLocaleDateString('uz-UZ', {
+                                day: '2-digit', month: '2-digit',
+                                hour: '2-digit', minute: '2-digit'
+                            });
+                        }
+                        return w.timestamp || 'N/A';
+                    } catch (e) {
+                        return w.timestamp || 'N/A';
+                    }
+                });
+
+                var tempData = weatherData.map(w => w.temperature || 0);
+                var humidityData = weatherData.map(w => w.humidity || 0);
+                var pressureData = weatherData.map(w => w.pressure || 0);
+
+                // Temperature Chart
+                var ctx = document.getElementById('tempChart')?.getContext('2d');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Harorat (°C)',
+                                data: tempData,
+                                borderColor: '#f72585',
+                                backgroundColor: 'rgba(247,37,133,0.1)',
+                                borderWidth: 3,
+                                pointBackgroundColor: '#f72585',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: true, position: 'top' },
+                                tooltip: {
+                                    mode: 'index', intersect: false,
+                                    backgroundColor: 'rgba(0,0,0,0.8)',
+                                    borderColor: '#f72585', borderWidth: 2
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    grid: { color: 'rgba(0,0,0,0.05)' },
+                                    ticks: { callback: v => v + '°C' }
+                                },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+
+                // Humidity & Pressure Chart
+                var ctx2 = document.getElementById('humidityPressureChart')?.getContext('2d');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Namlik (%)',
+                                    data: humidityData,
+                                    backgroundColor: 'rgba(76,201,240,0.7)',
+                                    borderColor: '#4cc9f0',
+                                    borderWidth: 1,
+                                    borderRadius: 5,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Bosim (hPa)',
+                                    data: pressureData,
+                                    backgroundColor: 'rgba(248,150,30,0.7)',
+                                    borderColor: '#f8961e',
+                                    borderWidth: 1,
+                                    borderRadius: 5,
+                                    yAxisID: 'y1'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: true, position: 'top' },
+                                tooltip: { mode: 'index', intersect: false }
+                            },
+                            scales: {
+                                y: {
+                                    type: 'linear', display: true,
+                                    position: 'left', beginAtZero: true, max: 100,
+                                    ticks: { callback: v => v + '%' }
+                                },
+                                y1: {
+                                    type: 'linear', display: true,
+                                    position: 'right', beginAtZero: true,
+                                    grid: { drawOnChartArea: false },
+                                    ticks: { callback: v => v + ' hPa' }
+                                },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Chart error:', error);
+        }
+    });
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
