@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Monitoring | Statistikalar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-md: 0 8px 25px rgba(0,0,0,0.1);
+            --shadow-lg: 0 15px 40px rgba(0,0,0,0.15);
+            --shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+            --dark: #1e1e2f;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            background: var(--gradient-1);
+            color: white;
+            padding: 1.2rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .sidebar ul li {
+            padding: 0;
+            margin-bottom: 5px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .sidebar ul li a:hover {
+            background: var(--gradient-1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li.active a {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.8rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .calendar-header span {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            padding: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            background: #f8f9fa;
+            font-size: 0.9rem;
+            font-weight: 600;
+            position: relative;
+            padding: 5px;
+        }
+
+        .calendar-day:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.today {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .calendar-day.has-plan {
+            border-color: #4cc9f0;
+            background: #f0fbff;
+        }
+
+        .calendar-day.has-plan.not-suitable {
+            border-color: #f72585;
+            background: #fff0f7;
+        }
+
+        .calendar-day.past {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .calendar-day .plan-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4cc9f0;
+            position: absolute;
+            bottom: 4px;
+        }
+
+        .calendar-day.not-suitable .plan-dot {
+            background: #f72585;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-nav button {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .calendar-nav button:hover {
+            background: var(--gradient-1);
+            border-color: transparent;
+            color: white;
+        }
+
+        .calendar-nav h5 { font-weight: 700; color: var(--dark); }
+
+        .plan-form {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .plan-form.show { display: block; }
+
+        .plan-form input[type="text"] {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            background: white;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .plan-form input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
+            outline: none;
+        }
+
+        .btn-save {
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+        }
+
+        .plan-card {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .plan-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .plan-card.suitable { border-left: 4px solid #4cc9f0; }
+        .plan-card.not-suitable { border-left: 4px solid #f72585; }
+
+        .plan-date { font-size: 0.8rem; color: #adb5bd; margin-bottom: 4px; }
+        .plan-text { font-weight: 600; color: var(--dark); margin-bottom: 6px; }
+        .plan-advice { font-size: 0.85rem; color: #6c757d; }
+
+        .suitable-badge {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .suitable-badge.yes {
+            background: #f0fff4;
+            color: #2d6a4f;
+            border: 1px solid #b7efc5;
+        }
+
+        .suitable-badge.no {
+            background: #fff0f3;
+            color: #c9184a;
+            border: 1px solid #ffb3c1;
+        }
+
+        .btn-delete-plan {
+            background: none;
+            border: none;
+            color: #f72585;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-delete-plan:hover { background: #fff0f3; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-tree-fill me-2"></i>Eco Monitoring</h2>
+            <p class="mb-0 opacity-75 small">Havo sifati monitoring tizimi</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <div class="user-info">
+                <i class="bi bi-person-circle fs-5"></i>
+                <span class="fw-semibold" th:text="${username}">User</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Chiqish</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="sidebar">
+                <ul class="list-unstyled">
+                    <li><a href="/"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li><a href="/cities"><i class="bi bi-building"></i> Shaharlar</a></li>
+                    <li><a href="/history"><i class="bi bi-clock-history"></i> Tarix</a></li>
+                    <li class="active"><a href="/statistics"><i class="bi bi-graph-up"></i> Reja</a></li>
+                    <li><a href="/settings"><i class="bi bi-gear"></i> Sozlamalar</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+
+            <!-- ✅ planDates ni hidden div orqali HTML da chiqaramiz -->
+            <div id="planData" style="display:none;">
+                <span th:each="plan : ${plans}"
+                      th:data-date="${plan.planDate}"
+                      th:data-suitable="${plan.suitable}"
+                      class="plan-data-item">
+                </span>
+            </div>
+
+            <!-- Calendar Card -->
+            <div class="main-card">
+                <h4 style="font-weight:700; color:#1e1e2f; margin-bottom:1.5rem;">
+                    <i class="bi bi-calendar3 text-primary me-2"></i>Reja kalendari
+                </h4>
+
+                <div class="calendar-nav">
+                    <button onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+                    <h5 id="calendarTitle"></h5>
+                    <button onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+                </div>
+
+                <div class="calendar-header">
+                    <span>Du</span><span>Se</span><span>Ch</span>
+                    <span>Pa</span><span>Ju</span><span>Sh</span><span>Ya</span>
+                </div>
+
+                <div class="calendar-grid" id="calendarGrid"></div>
+
+                <!-- Plan Form -->
+                <div class="plan-form" id="planForm">
+                    <h6 style="font-weight:700; color:#1e1e2f; margin-bottom:1rem;">
+                        <i class="bi bi-pencil-square me-2 text-primary"></i>
+                        <span id="selectedDateText"></span> uchun reja
+                    </h6>
+                    <form th:action="@{/statistics/add}" method="post">
+                        <input type="hidden" name="planDate" id="planDateInput">
+                        <input type="text" name="planText"
+                               placeholder="Rejangizni yozing (masalan: futbol, sayr, piknik...)"
+                               required>
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-check-circle me-2"></i>Saqlash
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Plans List -->
+            <div class="main-card">
+                <h4 style="font-weight:700; color:#1e1e2f; margin-bottom:1.5rem;">
+                    <i class="bi bi-list-check text-primary me-2"></i>Rejalar ro'yxati
+                </h4>
+
+                <div th:if="${plans == null or plans.isEmpty()}" class="empty-state">
+                    <i class="bi bi-calendar-x d-block"></i>
+                    <h5>Rejalar mavjud emas</h5>
+                    <p>Yuqoridagi kalendardan kun tanlang va reja qo'shing</p>
+                </div>
+
+                <div th:each="plan : ${plans}"
+                     th:class="${'plan-card ' + (plan.suitable ? 'suitable' : 'not-suitable')}">
+                    <div>
+                        <div class="plan-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            <span th:text="${#temporals.format(plan.planDate, 'dd.MM.yyyy')}"></span>
+                        </div>
+                        <div class="plan-text" th:text="${plan.planText}"></div>
+                        <div class="plan-advice" th:text="${plan.weatherAdvice}"></div>
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <span th:class="${'suitable-badge ' + (plan.suitable ? 'yes' : 'no')}"
+                              th:text="${plan.suitable ? '✅ Mos' : '❌ Mos emas'}">
+                        </span>
+                        <form th:action="@{/statistics/delete/{id}(id=${plan.id})}" method="post">
+                            <button type="submit" class="btn-delete-plan"
+                                    onclick="return confirm('Rejani o\'chirishni tasdiqlaysizmi?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="text-align:center; padding:1.5rem; color:#6c757d; font-size:0.9rem;">
+        <i class="bi bi-c-circle me-1"></i>
+        2026 Eco Monitoring | Barcha huquqlar himoyalangan
+    </div>
+</div>
+
+<script>
+    // ✅ HTML dan plan ma'lumotlarini o'qiymiz
+    var plannedDates = [];
+    var suitableMap = {};
+
+    document.querySelectorAll('.plan-data-item').forEach(function(el) {
+        var date = el.getAttribute('data-date');
+        var suitable = el.getAttribute('data-suitable') === 'true';
+        if (date) {
+            plannedDates.push(date);
+            suitableMap[date] = suitable;
+        }
+    });
+
+    var today = new Date();
+    var currentMonth = today.getMonth();
+    var currentYear = today.getFullYear();
+
+    var monthNames = [
+        'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
+        'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'
+    ];
+
+    function renderCalendar() {
+        var grid = document.getElementById('calendarGrid');
+        var title = document.getElementById('calendarTitle');
+        grid.innerHTML = '';
+        title.textContent = monthNames[currentMonth] + ' ' + currentYear;
+
+        var firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        firstDay = firstDay === 0 ? 6 : firstDay - 1;
+
+        var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        for (var i = 0; i < firstDay; i++) {
+            grid.appendChild(document.createElement('div'));
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dayEl = document.createElement('div');
+            dayEl.className = 'calendar-day';
+            dayEl.textContent = d;
+
+            var dateStr = currentYear + '-' +
+                String(currentMonth + 1).padStart(2, '0') + '-' +
+                String(d).padStart(2, '0');
+
+            var dayDate = new Date(currentYear, currentMonth, d);
+            var todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+            if (dayDate.getTime() === todayDate.getTime()) {
+                dayEl.classList.add('today');
+            }
+
+            if (dayDate < todayDate) {
+                dayEl.classList.add('past');
+            }
+
+            if (plannedDates.includes(dateStr)) {
+                dayEl.classList.add('has-plan');
+                var dot = document.createElement('div');
+                dot.className = 'plan-dot';
+                dayEl.appendChild(dot);
+                if (suitableMap[dateStr] === false) {
+                    dayEl.classList.add('not-suitable');
+                }
+            }
+
+            if (dayDate >= todayDate) {
+                (function(date, day) {
+                    dayEl.addEventListener('click', function() {
+                        selectDay(date, day);
+                    });
+                })(dateStr, d);
+            }
+
+            grid.appendChild(dayEl);
+        }
+    }
+
+    function selectDay(dateStr, day) {
+        document.getElementById('planDateInput').value = dateStr;
+        document.getElementById('selectedDateText').textContent =
+            day + ' ' + monthNames[currentMonth] + ' ' + currentYear;
+        var form = document.getElementById('planForm');
+        form.classList.add('show');
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function changeMonth(dir) {
+        currentMonth += dir;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        renderCalendar();
+    }
+
+    renderCalendar();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
